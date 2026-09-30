@@ -1,6 +1,273 @@
-Relevant researcher work:
+# HAR-BAS — AI Human Activity Recognition for Bharatiya Antariksh Station
 
-1. Carreira & Zisserman (2017) — "Quo Vadis, Action Recognition?" (I3D) — CVPR 2017. Multi-scale 3D ConvNets for video action recognition. Foundational for sequence-based HAR.
-2. Yan et al. (2018) — "Spatial Temporal Graph Convolutional Networks for Skeleton-Based Action Recognition" (ST-GCN) — AAAI 2018. Treats skeleton joints as graph → GCN for action classification. Direct fit for your use case.
-3. Cheng et al. (2020) — "Skeleton-based Action Recognition with Shift Graph Convolutional Network" (Shift-GCN). Improved over ST-GCN. Handles variable sequence lengths.
-4. NASA EVA task monitoring — Unpublished internal work on real-time astronaut activity tracking in spacesuits.
+> Into SpaceTech, where resource is scarce.
+>
+> Real-time, fully offline, on-board AI assistant for autonomous experiment execution in microgravity
+
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-orange)](https://pytorch.org/)
+[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple)](https://github.com/ultralytics/ultralytics)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
+---
+
+## Problem Statement
+
+> *"AI Human Activity Recognition for On-board BAS (Bharatiya Antariksh Station) Experiments"*
+
+Real-time ground support for space missions is impossible due to communication delays (up to 20 minutes one-way for deep-space missions). This system acts as an on-board AI assistant that:
+
+- Monitors an astronaut performing a pre-defined scientific experiment
+- Enforces the correct procedural step sequence via a **Directed Acyclic Graph (DAG)** validator
+- Issues real-time **voice alerts** for skipped or repeated steps
+- Operates **entirely offline** — no cloud, no internet, no external API calls
+- Uses person-relative pose features and an optional rack-relative wrist display; rotational robustness has not been established
+
+---
+
+## System Architecture
+
+Camera frames flow through YOLOv8n-Pose, which produces 17 COCO keypoints. The runtime normalizes those person-relative coordinates into 51 features per frame, buffers 20 frames, and sends a (1, 20, 51) tensor to the TCN+GRU classifier. Canonical action IDs pass through a sliding vote and the active experiment DAG validator before the dashboard or voice alert is updated.
+
+ArUco detection runs alongside pose estimation. It tracks the rack origin and displays a right-wrist offset, but those rack-relative coordinates are not classifier input. New recordings and labelled clips carry session metadata; training splits complete sessions before generating temporal windows.
+### Why this design for space?
+
+| Space Challenge | Our Solution |
+|---|---|
+| Body floats at any angle | ArUco provides a rack-relative wrist display; classifier features remain person-relative |
+| No internet / cloud in orbit | Fully offline — custom trained model, no API calls |
+| Pose representation | Person-center and bounding-box normalization stabilizes translation and scale; rotation robustness is not established by the current feature transform |
+| False positives from idle movement | Sliding-window voting — 65% of last 20 frames must agree before triggering |
+| Step sequence must be enforced | DAG validator — mathematically impossible to skip or repeat validated steps |
+| Communication delays prevent remote support | System is fully autonomous — astronaut performs experiment independently with on-board AI guidance |
+
+---
+
+## Tech Stack
+
+| Component | Library / Tool | Version | Role |
+|---|---|---|---|
+| Pose estimation | `ultralytics` (YOLOv8n-pose) | 8.x | 17-joint real-time skeleton at ~30fps |
+| Action classifier | torch (TCN+GRU) | 2.x | 20-frame sequence classification on 51 YOLO pose features |
+| Rack-relative frame | `opencv-contrib-python` (ArUco) | 4.x | Microgravity orientation anchor |
+| Step validation | Custom DAG (`validator.py`) | — | Enforces experiment protocol order |
+| Voice alerts | PowerShell SAPI on Windows | system | Offline runtime announcements |
+| Live GUI | `flask` + Server-Sent Events | 3.x | Real-time browser dashboard, no reload |
+| Video recording | `cv2.VideoWriter` | — | Saves `.avi` experiment recordings |
+| Logging | JSONL (`experiment_log.jsonl`) | — | Timestamped structured event log |
+
+---
+
+## File Structure
+
+```
+BAS_based_HAR_system/
+│
+├── main.py                   # Full pipeline entry point (run this)
+├── config.py                 # Experiment steps + DAG dict (edit to change experiment)
+├── validator.py              # DAG step validation logic
+│
+├── collect_keypoints.py      # Step 1: collect training data via webcam (YOLOv8 keypoints)
+├── train_keypoint_model.py   # Session-grouped TCN+GRU train/validation/test pipeline
+├── temporal_model.py         # TCN+GRU architecture definition
+│
+├── collect_images.py         # (legacy) raw image collection for CNN approach
+├── train_model.py            # (legacy) MobileNetV3 image classifier
+│
+├── aruco_rack.py             # Standalone ArUco rack detection test script
+├── rack_pose.py              # Standalone rack + pose overlay test script
+├── zone_debug.py             # Rack-relative wrist coordinate debugger
+├── pose_engine.py            # Pose utility reference
+├── camera_test.py            # Quick camera sanity check
+├── test_llava.py             # LLaVA inference test (prototype stage)
+│
+├── tcngru_exp*.pth           # ← Preserved legacy TCN+GRU weights
+├── mlp_exp*.pth              # ← Legacy MLP weights (not Phase 1 runtime models)
+├── har_model.pth             # ← CNN weights (generated by train_model.py)
+├── kp_mean_exp*.npy          # ← Preserved legacy normalization files
+├── kp_std_exp*.npy           # Keypoint normalisation std
+├── class_map_exp*.json       # Class index → action string mapping
+├── experiment_log.jsonl      # Timestamped experiment event log
+│
+├── keypoint_data/            # New session clips plus append-only JSONL manifests
+├── dataset/                  # Collected image files (per class, legacy)
+├── recordings/               # AVI recordings plus new session metadata
+│
+└── gui/
+    └── app.py                # Standalone GUI server (development reference)
+```
+
+---
+
+## Installation
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/Anish05s/BAS_based_HAR_system
+cd BAS_based_HAR_system
+
+# 2. Create and activate a virtual environment
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+
+# 3. Install dependencies
+pip install --upgrade pip
+pip install torch torchvision
+pip install opencv-contrib-python
+pip install ultralytics
+pip install flask pyttsx3
+pip install numpy scikit-learn pillow
+```
+
+> **⚠ Important:** Do NOT install `mediapipe` or `tensorflow` in the same environment.  
+> They conflict with numpy versions (`mediapipe` pins `numpy<2`, conflicts with `opencv-contrib`).  
+> This project does not use either library.
+
+---
+
+## Usage
+
+### Collect a labelled session
+
+    py -3 collect_keypoints.py --exp 1
+    py -3 collect_keypoints.py --exp 2
+
+Each collector invocation creates a new session ID. Select an action with its number key, then use SPACE to start and stop a live-camera clip. For a video source, use R to mark labelled clips and SPACE to pause or resume. The operator-selected labels and frame indices are written to keypoint_data/manifest.jsonl; clips go into a new keypoint_data/expN/session_<uuid>/ directory. Existing data is not overwritten.
+
+For independent evaluation, collect multiple complete sessions from separate takes. Include clips for every configured class, including idle. A clip needs at least 20 contiguous detected-pose frames. The trainer will report an error instead of splitting sessions if it cannot form non-empty, session-disjoint train, validation, and test groups.
+
+### Inspect existing data
+
+    py -3 inventory_migration.py
+
+This reads the current recordings, image folders, keypoint files, and experiment log, then writes a new timestamped report under migration_reports/. It does not modify the source data. Uncertain session, source-video, and experiment provenance remains unassigned.
+
+### Train and evaluate TCN+GRU
+
+    py -3 train_keypoint_model.py --exp 1 --model tcngru
+
+Training uses manifest-backed clips only. Whole source-recording groups for video clips and whole capture-session groups for live clips are split before any 20-frame windows are made. Normalization is fit on unique training frames only. The validation set selects the checkpoint; the independent test set is evaluated once at the end. The split, ordered canonical class map, normalization, metrics, seed, YOLO weights fingerprint, Ultralytics version, and input schema are stored in a new models/phase1/expN/run_<id>/ directory. Existing checkpoints and normalization files are not replaced.
+
+If there are too few independent sessions, the trainer stops without creating a split or model output. It does not claim improved accuracy; metrics describe only the recorded test sessions.
+
+### Run the monitor
+
+    py -3 main.py
+
+The monitor loads only a metadata-backed Phase 1 TCN+GRU run with a matching experiment, class map, 51-feature schema, 20-frame input, and non-empty independent test evaluation. Legacy root-level checkpoints are preserved but are not treated as verified Phase 1 models. If no qualifying run exists, the dashboard and camera can start while action inference remains disabled.
+
+Experiment switching resets the model, vote buffer, temporal buffer, validator graph state, and dashboard progress. validator.py enforces configured DAG edges rather than assuming a linear order.
+## GUI Dashboard
+
+Open `http://<ip>:5000` in any browser:
+
+| Element | Description |
+|---|---|
+| **Live video** | Camera feed with YOLOv8 skeleton overlay and step label |
+| **Progress bar** | Visual experiment completion percentage |
+| **Status indicator** | WAITING (orange) / ARMED — Inference RUNNING (green) |
+| **Detection row** | Current model prediction + confidence + vote count |
+| **Rack-relative coords** | Right wrist position relative to ArUco rack origin |
+| **Alert panel** | Skip / already-done warning messages |
+| **Experiment log** | Last 15 timestamped events |
+| **START / STOP / Reset** | Full experiment flow control |
+
+Updates via **Server-Sent Events** (SSE) — live push, no page reload, no meta-refresh.
+
+---
+
+## ArUco Rack Setup
+
+Print an **ArUco marker ID = 0** from the `DICT_6X6_250` dictionary and attach it to the experiment rack or equipment tray.
+
+**Generate a printable marker:**
+```python
+import cv2
+import cv2.aruco as aruco
+import numpy as np
+
+dictionary = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+marker = aruco.generateImageMarker(dictionary, 0, 300)
+cv2.imwrite("aruco_marker_0.png", marker)
+```
+
+Print `aruco_marker_0.png` at ~5×5 cm and fix it to the rack. The current runtime will:
+1. Detect the marker and set it as coordinate origin `(0, 0)`
+2. Display the right-wrist pixel offset from this origin (not a classifier feature)
+3. Fall back to the last known position if the marker is temporarily blocked by hands
+
+The marker provides a rack-relative display cue. The classifier itself currently uses person-relative keypoints; orientation robustness has not been established.
+
+---
+
+## Model Details
+
+### Temporal Action Classifier (TCN + GRU)
+
+The classifier input contract is exactly 20 frames × 51 features: 17 YOLOv8-Pose COCO keypoints with (x, y, confidence) per point. Training creates windows within a single labelled clip and rejects windows that cross missing-frame gaps. Inference clears the temporal buffer when no person pose is detected.
+
+The 51 input features are person-center and bounding-box normalized by the same extraction logic in collection and runtime. Saved z-score mean and standard deviation are fitted on training frames only and are carried in the checkpoint metadata.
+
+Canonical action IDs are stored with the ordered model output map. Experiment 2's existing scooping and capping labels remain unmapped legacy labels; they are not converted automatically. Idle is a background class and is not a DAG step.
+
+### Evaluation protocol
+
+- Split unit: complete capture session.
+- Split occurs before temporal-window generation.
+- At least three eligible session groups are required to make non-empty train, validation, and test groups. Actual proportions depend on the available whole groups.
+- Validation selects the best epoch; test data is held out until final reporting.
+- Window-level metrics are reported with a macro average across independent test groups; overlapping windows are not treated as independent observations.
+- Per-class support is included with test metrics so missing class coverage is visible.
+## References
+
+### Core Models and Libraries Used
+
+**[1]** Jocher, G., Chaurasia, A., & Qiu, J. (2023). *Ultralytics YOLOv8* (Version 8.0.0) [Software]. Ultralytics. https://github.com/ultralytics/ultralytics  
+*(Pose estimation backbone — 17 COCO keypoints at 30fps)*
+
+**[2]** Howard, A., Sandler, M., Chu, G., Chen, L.-C., Chen, B., Tan, M., Wang, W., Zhu, Y., Pang, R., Vasudevan, V., Le, Q. V., & Adam, H. (2019). Searching for MobileNetV3. *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*, 1314–1324.  
+*(Lightweight CNN backbone used in the image-classification prototype stage)*
+
+**[3]** Garrido-Jurado, S., Muñoz-Salinas, R., Madrid-Cuevas, F. J., & Marín-Jiménez, M. J. (2014). Automatic generation and detection of highly reliable fiducial markers under occlusion. *Pattern Recognition*, 47(6), 2280–2292. https://doi.org/10.1016/j.patcog.2014.01.005  
+*(ArUco fiducial markers — rack-relative coordinate frame for microgravity)*
+
+**[4]** Bradski, G. (2000). The OpenCV Library. *Dr. Dobb's Journal of Software Tools*.  
+*(OpenCV — camera capture, ArUco detection, video recording, frame overlays)*
+
+**[5]** Pallets Projects. (2010). *Flask* [Software]. https://flask.palletsprojects.com  
+*(Web server for the real-time SSE monitoring dashboard)*
+
+---
+
+### Related Work — Human Activity Recognition
+
+**[6]** Carreira, J., & Zisserman, A. (2017). Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 4724–4733. https://doi.org/10.1109/CVPR.2017.502  
+*(I3D — foundational two-stream inflated 3D ConvNet for video action recognition)*
+
+**[7]** Yan, S., Xiong, Y., & Lin, D. (2018). Spatial Temporal Graph Convolutional Networks for Skeleton-Based Action Recognition. *Proceedings of the Thirty-Second AAAI Conference on Artificial Intelligence (AAAI-18)*. https://doi.org/10.1609/aaai.v32i1.12328  
+*(ST-GCN — skeleton joints as graph → GCN for action classification; direct conceptual basis for keypoint-based HAR)*
+
+**[8]** Cheng, K., Zhang, Y., He, X., Chen, W., Cheng, J., & Lu, H. (2020). Skeleton-Based Action Recognition with Shift Graph Convolutional Network. *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 183–192.  
+*(Shift-GCN — improved skeleton-based recognition with variable-length sequence handling)*
+
+**[9]** Arshad, M. H., Bilal, M., & Gani, A. (2022). Human Activity Recognition: Review, Taxonomy and Open Challenges. *Sensors*, 22(17), 6463. https://doi.org/10.3390/s22176463  
+*(Comprehensive HAR survey — covers CNN, LSTM, GCN approaches; confirms keypoint-based methods as state-of-the-art for real-time edge HAR)*
+
+---
+
+### Space Operations and Astronaut Monitoring
+
+**[10]** NASA Human Research Program. (2022). *Evidence Report: Risk of Adverse Cognitive or Behavioral Conditions and Psychiatric Disorders*. NASA Johnson Space Center.  
+*(Establishes the need for autonomous performance monitoring during long-duration spaceflight when ground support is unavailable)*
+
+**[11]** Tatebe, K., Shiraishi, N., Kaneko, K., & Nagatomo, M. (2022). Study of AI and ML Based Technologies Used in International Space Station. *International Journal of Engineering Research and Technology (IJERT)*, 11(5).  
+*(Survey of deployed AI systems on ISS — onboard assistants, crew health monitoring, experiment support)*
+
+**[12]** Fong, T., Nourbakhsh, I., & Dautenhahn, K. (2003). A survey of socially interactive robots. *Robotics and Autonomous Systems*, 42(3–4), 143–166.  
+*(Human-robot teaming principles applied in this work via the DAG-driven co-procedure model)*
+
+---
+
+*Built for Smart India Hackathon 2026. All inference runs locally on the astronaut's on-board computer.*
+
