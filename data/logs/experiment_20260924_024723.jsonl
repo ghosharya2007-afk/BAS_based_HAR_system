@@ -1,0 +1,5 @@
+{"t": 1790198245.7941637, "time": "2026-09-24T02:47:25", "event": "experiment_start", "steps": ["Pick Up Container", "Open Container", "Use Spoon to Extract", "Place Contents in Rack", "Close Container"]}
+{"t": 1790198262.3372416, "time": "2026-09-24T02:47:42", "event": "step_confirmed", "step": 0, "name": "Pick Up Container"}
+{"t": 1790198278.149722, "time": "2026-09-24T02:47:58", "event": "step_confirmed", "step": 1, "name": "Open Container"}
+{"t": 1790198300.6322715, "time": "2026-09-24T02:48:20", "event": "step_skipped", "skipped": ["Use Spoon to Extract", "Place Contents in Rack"]}
+{"t": 1790198325.9756918, "time": "2026-09-24T02:48:45", "event": "experiment_end", "progress": "5/5"}

@@ -1,0 +1,51 @@
+{"time": "22:22:50", "event": "Alert fired at zone 3"}
+{"time": "22:23:04", "event": "Step 1 complete: Open Container"}
+{"time": "22:23:08", "event": "Step 2 complete: Pick Tool"}
+{"time": "22:23:23", "event": "Alert fired at zone 0"}
+{"time": "22:23:32", "event": "Alert fired at zone 3"}
+{"time": "22:23:33", "event": "Alert fired at zone 3"}
+{"time": "22:24:03", "event": "Alert fired at zone 0"}
+{"time": "22:24:17", "event": "Step 3 complete: Interact with Sample"}
+{"time": "22:24:37", "event": "Alert fired at zone 2"}
+{"time": "22:24:50", "event": "Alert fired at zone 2"}
+{"time": "00:45:05", "event": "Alert fired at zone 2"}
+{"time": "00:45:08", "event": "Alert fired at zone 2"}
+{"time": "00:45:34", "event": "Step 1 complete: Open Container"}
+{"time": "00:45:59", "event": "Alert fired at zone 0"}
+{"time": "00:46:42", "event": "Step 1 complete: Open Container"}
+{"time": "00:46:48", "event": "Alert fired at zone 0"}
+{"time": "00:46:56", "event": "Alert fired at zone 0"}
+{"time": "00:46:57", "event": "Alert fired at zone 0"}
+{"time": "00:51:47", "event": "Step 1 complete: Open Container"}
+{"time": "01:16:21", "event": "Alert fired at zone 3"}
+{"time": "01:16:22", "event": "Alert fired at zone 2"}
+{"time": "01:16:24", "event": "Alert fired at zone 3"}
+{"time": "01:16:26", "event": "Alert fired at zone 2"}
+{"time": "01:17:12", "event": "Step 1 complete: Pick Up Container"}
+{"time": "01:17:51", "event": "Alert fired at zone 2"}
+{"time": "18:57:30", "event": "Step 1 complete: Pick Up Container"}
+{"time": "18:57:41", "event": "Step 2 complete: Open Container"}
+{"time": "18:58:10", "event": "Step 3 complete: Use Spatula to Extract"}
+{"time": "18:59:00", "event": "Step 1 complete: Pick Up Container"}
+{"time": "18:59:12", "event": "Step 2 complete: Open Container"}
+{"time": "19:00:29", "event": "Step 1 complete: Pick Up Container"}
+{"time": "19:00:57", "event": "Step 2 complete: Open Container"}
+{"time": "19:01:08", "event": "Step 3 complete: Use Spatula to Extract"}
+{"time": "19:01:14", "event": "Step 4 complete: Close Container"}
+{"time": "19:24:32", "event": "Skip alert at step 3"}
+{"time": "19:24:37", "event": "Experiment reset"}
+{"time": "19:25:44", "event": "Experiment reset"}
+{"time": "19:25:46", "event": "Experiment reset"}
+{"time": "19:26:16", "event": "Skip alert at step 1"}
+{"time": "19:26:33", "event": "Step 1 complete: Pick Up Container"}
+{"time": "19:26:39", "event": "Skip alert at step 3"}
+{"time": "19:26:51", "event": "Step 2 complete: Open Container"}
+{"time": "19:27:02", "event": "Already completed: Open Container"}
+{"time": "19:27:21", "event": "Step 3 complete: Use Spatula to Extract"}
+{"time": "19:27:38", "event": "Already completed: Use Spatula to Extract"}
+{"time": "19:27:44", "event": "Step 4 complete: Close Container"}
+{"time": "19:27:53", "event": "Experiment reset"}
+{"time": "19:28:30", "event": "Step 1 complete: Pick Up Container"}
+{"time": "19:28:36", "event": "Step 2 complete: Open Container"}
+{"time": "19:29:35", "event": "Step 3 complete: Use Spatula to Extract"}
+{"time": "19:29:41", "event": "Step 4 complete: Close Container"}

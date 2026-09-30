@@ -1,0 +1,76 @@
+{"t": 1790263470.2586188, "time": "2026-09-24T20:54:30", "event": "experiment_start", "steps": ["Pick Up Container", "Open Container", "Use Spoon to Extract", "Place Contents in Rack", "Close Container"]}
+{"t": 1790263487.3426454, "time": "2026-09-24T20:54:47", "event": "out_of_order", "step": 1}
+{"t": 1790263487.3931851, "time": "2026-09-24T20:54:47", "event": "out_of_order", "step": 1}
+{"t": 1790263495.7163296, "time": "2026-09-24T20:54:55", "event": "out_of_order", "step": 1}
+{"t": 1790263495.7623746, "time": "2026-09-24T20:54:55", "event": "out_of_order", "step": 1}
+{"t": 1790263497.180618, "time": "2026-09-24T20:54:57", "event": "out_of_order", "step": 1}
+{"t": 1790263497.2251976, "time": "2026-09-24T20:54:57", "event": "out_of_order", "step": 1}
+{"t": 1790263497.8929758, "time": "2026-09-24T20:54:57", "event": "out_of_order", "step": 1}
+{"t": 1790263497.9401257, "time": "2026-09-24T20:54:57", "event": "out_of_order", "step": 1}
+{"t": 1790263498.6501377, "time": "2026-09-24T20:54:58", "event": "out_of_order", "step": 1}
+{"t": 1790263498.6963673, "time": "2026-09-24T20:54:58", "event": "out_of_order", "step": 1}
+{"t": 1790263499.364026, "time": "2026-09-24T20:54:59", "event": "out_of_order", "step": 1}
+{"t": 1790263499.4151886, "time": "2026-09-24T20:54:59", "event": "out_of_order", "step": 1}
+{"t": 1790263500.0934126, "time": "2026-09-24T20:55:00", "event": "out_of_order", "step": 1}
+{"t": 1790263500.133544, "time": "2026-09-24T20:55:00", "event": "out_of_order", "step": 1}
+{"t": 1790263500.8226337, "time": "2026-09-24T20:55:00", "event": "out_of_order", "step": 1}
+{"t": 1790263500.8673224, "time": "2026-09-24T20:55:00", "event": "out_of_order", "step": 1}
+{"t": 1790263501.5582604, "time": "2026-09-24T20:55:01", "event": "out_of_order", "step": 1}
+{"t": 1790263501.6025083, "time": "2026-09-24T20:55:01", "event": "out_of_order", "step": 1}
+{"t": 1790263504.464916, "time": "2026-09-24T20:55:04", "event": "step_confirmed", "step": 0, "name": "Pick Up Container"}
+{"t": 1790263519.8614984, "time": "2026-09-24T20:55:19", "event": "step_confirmed", "step": 1, "name": "Open Container"}
+{"t": 1790263620.0832367, "time": "2026-09-24T20:57:00", "event": "out_of_order", "step": 3}
+{"t": 1790263620.146196, "time": "2026-09-24T20:57:00", "event": "out_of_order", "step": 3}
+{"t": 1790263620.9637, "time": "2026-09-24T20:57:00", "event": "out_of_order", "step": 3}
+{"t": 1790263621.01598, "time": "2026-09-24T20:57:01", "event": "out_of_order", "step": 3}
+{"t": 1790263622.4106777, "time": "2026-09-24T20:57:02", "event": "out_of_order", "step": 3}
+{"t": 1790263622.4609368, "time": "2026-09-24T20:57:02", "event": "out_of_order", "step": 3}
+{"t": 1790263623.1523442, "time": "2026-09-24T20:57:03", "event": "out_of_order", "step": 3}
+{"t": 1790263623.2040486, "time": "2026-09-24T20:57:03", "event": "out_of_order", "step": 3}
+{"t": 1790263623.9024355, "time": "2026-09-24T20:57:03", "event": "out_of_order", "step": 3}
+{"t": 1790263623.9488432, "time": "2026-09-24T20:57:03", "event": "out_of_order", "step": 3}
+{"t": 1790263624.6318247, "time": "2026-09-24T20:57:04", "event": "out_of_order", "step": 3}
+{"t": 1790263624.678604, "time": "2026-09-24T20:57:04", "event": "out_of_order", "step": 3}
+{"t": 1790263626.0646734, "time": "2026-09-24T20:57:06", "event": "out_of_order", "step": 3}
+{"t": 1790263626.118863, "time": "2026-09-24T20:57:06", "event": "out_of_order", "step": 3}
+{"t": 1790263626.7923522, "time": "2026-09-24T20:57:06", "event": "out_of_order", "step": 3}
+{"t": 1790263626.8482013, "time": "2026-09-24T20:57:06", "event": "out_of_order", "step": 3}
+{"t": 1790263627.5401013, "time": "2026-09-24T20:57:07", "event": "out_of_order", "step": 3}
+{"t": 1790263627.5865788, "time": "2026-09-24T20:57:07", "event": "out_of_order", "step": 3}
+{"t": 1790263629.0292068, "time": "2026-09-24T20:57:09", "event": "out_of_order", "step": 3}
+{"t": 1790263629.0732362, "time": "2026-09-24T20:57:09", "event": "out_of_order", "step": 3}
+{"t": 1790263629.7538617, "time": "2026-09-24T20:57:09", "event": "out_of_order", "step": 3}
+{"t": 1790263629.8000116, "time": "2026-09-24T20:57:09", "event": "out_of_order", "step": 3}
+{"t": 1790263630.4945564, "time": "2026-09-24T20:57:10", "event": "out_of_order", "step": 3}
+{"t": 1790263630.539841, "time": "2026-09-24T20:57:10", "event": "out_of_order", "step": 3}
+{"t": 1790263631.2053583, "time": "2026-09-24T20:57:11", "event": "out_of_order", "step": 3}
+{"t": 1790263631.258633, "time": "2026-09-24T20:57:11", "event": "out_of_order", "step": 3}
+{"t": 1790263631.9401069, "time": "2026-09-24T20:57:11", "event": "out_of_order", "step": 3}
+{"t": 1790263631.9882562, "time": "2026-09-24T20:57:11", "event": "out_of_order", "step": 3}
+{"t": 1790263632.710147, "time": "2026-09-24T20:57:12", "event": "out_of_order", "step": 3}
+{"t": 1790263632.7642076, "time": "2026-09-24T20:57:12", "event": "out_of_order", "step": 3}
+{"t": 1790263633.474502, "time": "2026-09-24T20:57:13", "event": "out_of_order", "step": 3}
+{"t": 1790263633.5206747, "time": "2026-09-24T20:57:13", "event": "out_of_order", "step": 3}
+{"t": 1790263634.2058046, "time": "2026-09-24T20:57:14", "event": "out_of_order", "step": 3}
+{"t": 1790263634.2572877, "time": "2026-09-24T20:57:14", "event": "out_of_order", "step": 3}
+{"t": 1790263763.7712722, "time": "2026-09-24T20:59:23", "event": "step_confirmed", "step": 2, "name": "Use Spoon to Extract"}
+{"t": 1790263780.2552667, "time": "2026-09-24T20:59:40", "event": "out_of_order", "step": 4}
+{"t": 1790263780.3073635, "time": "2026-09-24T20:59:40", "event": "out_of_order", "step": 4}
+{"t": 1790263781.0152462, "time": "2026-09-24T20:59:41", "event": "out_of_order", "step": 4}
+{"t": 1790263781.0707965, "time": "2026-09-24T20:59:41", "event": "out_of_order", "step": 4}
+{"t": 1790263781.7574463, "time": "2026-09-24T20:59:41", "event": "out_of_order", "step": 4}
+{"t": 1790263781.8020856, "time": "2026-09-24T20:59:41", "event": "out_of_order", "step": 4}
+{"t": 1790263782.4720693, "time": "2026-09-24T20:59:42", "event": "out_of_order", "step": 4}
+{"t": 1790263782.5156019, "time": "2026-09-24T20:59:42", "event": "out_of_order", "step": 4}
+{"t": 1790263783.1817298, "time": "2026-09-24T20:59:43", "event": "out_of_order", "step": 4}
+{"t": 1790263783.2373238, "time": "2026-09-24T20:59:43", "event": "out_of_order", "step": 4}
+{"t": 1790263783.894568, "time": "2026-09-24T20:59:43", "event": "out_of_order", "step": 4}
+{"t": 1790263783.954808, "time": "2026-09-24T20:59:43", "event": "out_of_order", "step": 4}
+{"t": 1790263784.638951, "time": "2026-09-24T20:59:44", "event": "out_of_order", "step": 4}
+{"t": 1790263784.6900434, "time": "2026-09-24T20:59:44", "event": "out_of_order", "step": 4}
+{"t": 1790263785.3862689, "time": "2026-09-24T20:59:45", "event": "out_of_order", "step": 4}
+{"t": 1790263785.4447508, "time": "2026-09-24T20:59:45", "event": "out_of_order", "step": 4}
+{"t": 1790263851.582293, "time": "2026-09-24T21:00:51", "event": "step_confirmed", "step": 3, "name": "Place Contents in Rack"}
+{"t": 1790263866.8369696, "time": "2026-09-24T21:01:06", "event": "step_confirmed", "step": 4, "name": "Close Container"}
+{"t": 1790263866.8369696, "time": "2026-09-24T21:01:06", "event": "experiment_complete"}
+{"t": 1790263891.962505, "time": "2026-09-24T21:01:31", "event": "experiment_end", "progress": "5/5"}

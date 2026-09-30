@@ -1,0 +1,25 @@
+{"time": "22:22:50", "event": "Alert fired at zone 3"}
+{"time": "22:23:04", "event": "Step 1 complete: Open Container"}
+{"time": "22:23:08", "event": "Step 2 complete: Pick Tool"}
+{"time": "22:23:23", "event": "Alert fired at zone 0"}
+{"time": "22:23:32", "event": "Alert fired at zone 3"}
+{"time": "22:23:33", "event": "Alert fired at zone 3"}
+{"time": "22:24:03", "event": "Alert fired at zone 0"}
+{"time": "22:24:17", "event": "Step 3 complete: Interact with Sample"}
+{"time": "22:24:37", "event": "Alert fired at zone 2"}
+{"time": "22:24:50", "event": "Alert fired at zone 2"}
+{"time": "00:45:05", "event": "Alert fired at zone 2"}
+{"time": "00:45:08", "event": "Alert fired at zone 2"}
+{"time": "00:45:34", "event": "Step 1 complete: Open Container"}
+{"time": "00:45:59", "event": "Alert fired at zone 0"}
+{"time": "00:46:42", "event": "Step 1 complete: Open Container"}
+{"time": "00:46:48", "event": "Alert fired at zone 0"}
+{"time": "00:46:56", "event": "Alert fired at zone 0"}
+{"time": "00:46:57", "event": "Alert fired at zone 0"}
+{"time": "00:51:47", "event": "Step 1 complete: Open Container"}
+{"time": "01:16:21", "event": "Alert fired at zone 3"}
+{"time": "01:16:22", "event": "Alert fired at zone 2"}
+{"time": "01:16:24", "event": "Alert fired at zone 3"}
+{"time": "01:16:26", "event": "Alert fired at zone 2"}
+{"time": "01:17:12", "event": "Step 1 complete: Pick Up Container"}
+{"time": "01:17:51", "event": "Alert fired at zone 2"}

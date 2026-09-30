@@ -1,0 +1,3 @@
+{"t": 1790198817.5282784, "time": "2026-09-24T02:56:57", "event": "experiment_start", "steps": ["Pick Up Container", "Open Container", "Use Spoon to Extract", "Place Contents in Rack", "Close Container"]}
+{"t": 1790198874.195461, "time": "2026-09-24T02:57:54", "event": "step_skipped", "skipped": ["Pick Up Container", "Open Container", "Use Spoon to Extract", "Place Contents in Rack"]}
+{"t": 1790198903.3981898, "time": "2026-09-24T02:58:23", "event": "experiment_end", "progress": "5/5"}

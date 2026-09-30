@@ -1,0 +1,18 @@
+{"t": 1790266864.7401645, "time": "2026-09-24T21:51:04", "event": "experiment_start", "steps": ["Pick Up Container", "Open Container", "Use Spoon to Extract", "Place Contents in Rack", "Close Container"]}
+{"t": 1790266878.4800858, "time": "2026-09-24T21:51:18", "event": "step_confirmed", "step": 0, "name": "Pick Up Container"}
+{"t": 1790266891.3491416, "time": "2026-09-24T21:51:31", "event": "out_of_order", "step": 2}
+{"t": 1790266897.278924, "time": "2026-09-24T21:51:37", "event": "step_confirmed", "step": 1, "name": "Open Container"}
+{"t": 1790266913.796098, "time": "2026-09-24T21:51:53", "event": "step_confirmed", "step": 2, "name": "Use Spoon to Extract"}
+{"t": 1790266916.839199, "time": "2026-09-24T21:51:56", "event": "out_of_order", "step": 4}
+{"t": 1790266927.159922, "time": "2026-09-24T21:52:07", "event": "out_of_order", "step": 4}
+{"t": 1790266932.2065701, "time": "2026-09-24T21:52:12", "event": "out_of_order", "step": 4}
+{"t": 1790266937.36523, "time": "2026-09-24T21:52:17", "event": "out_of_order", "step": 4}
+{"t": 1790266942.5221877, "time": "2026-09-24T21:52:22", "event": "out_of_order", "step": 4}
+{"t": 1790266947.763064, "time": "2026-09-24T21:52:27", "event": "out_of_order", "step": 4}
+{"t": 1790266960.026737, "time": "2026-09-24T21:52:40", "event": "out_of_order", "step": 4}
+{"t": 1790266965.069308, "time": "2026-09-24T21:52:45", "event": "out_of_order", "step": 4}
+{"t": 1790266970.1971517, "time": "2026-09-24T21:52:50", "event": "out_of_order", "step": 4}
+{"t": 1790266974.552479, "time": "2026-09-24T21:52:54", "event": "step_confirmed", "step": 3, "name": "Place Contents in Rack"}
+{"t": 1790266990.8096716, "time": "2026-09-24T21:53:10", "event": "step_confirmed", "step": 4, "name": "Close Container"}
+{"t": 1790266990.8132942, "time": "2026-09-24T21:53:10", "event": "experiment_complete"}
+{"t": 1790267115.7604141, "time": "2026-09-24T21:55:15", "event": "experiment_end", "progress": "5/5"}
