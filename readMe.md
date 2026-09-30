@@ -1,273 +1,1286 @@
-# HAR-BAS — AI Human Activity Recognition for Bharatiya Antariksh Station
+# AI Human Activity Recognition for On-Board BAS Experiments
 
-> Into SpaceTech, where resource is scarce.
->
-> Real-time, fully offline, on-board AI assistant for autonomous experiment execution in microgravity
+## 🚀 Overview
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-orange)](https://pytorch.org/)
-[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple)](https://github.com/ultralytics/ultralytics)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+This project is an **AI-based Human Activity Recognition (HAR) system** designed for autonomous experiment monitoring in space environments such as **BAS (Bharatiya Antariksh Station)** and future lunar missions.
 
----
+The system processes video locally from a camera and recognizes objects, human pose, interactions, and experiment steps without requiring continuous communication with ground control.
 
-## Problem Statement
+The main objective is to verify that an astronaut performs a predefined experiment in the correct sequence.
 
-> *"AI Human Activity Recognition for On-board BAS (Bharatiya Antariksh Station) Experiments"*
+### Core capabilities
 
-Real-time ground support for space missions is impossible due to communication delays (up to 20 minutes one-way for deep-space missions). This system acts as an on-board AI assistant that:
-
-- Monitors an astronaut performing a pre-defined scientific experiment
-- Enforces the correct procedural step sequence via a **Directed Acyclic Graph (DAG)** validator
-- Issues real-time **voice alerts** for skipped or repeated steps
-- Operates **entirely offline** — no cloud, no internet, no external API calls
-- Uses person-relative pose features and an optional rack-relative wrist display; rotational robustness has not been established
-
----
-
-## System Architecture
-
-Camera frames flow through YOLOv8n-Pose, which produces 17 COCO keypoints. The runtime normalizes those person-relative coordinates into 51 features per frame, buffers 20 frames, and sends a (1, 20, 51) tensor to the TCN+GRU classifier. Canonical action IDs pass through a sliding vote and the active experiment DAG validator before the dashboard or voice alert is updated.
-
-ArUco detection runs alongside pose estimation. It tracks the rack origin and displays a right-wrist offset, but those rack-relative coordinates are not classifier input. New recordings and labelled clips carry session metadata; training splits complete sessions before generating temporal windows.
-### Why this design for space?
-
-| Space Challenge | Our Solution |
-|---|---|
-| Body floats at any angle | ArUco provides a rack-relative wrist display; classifier features remain person-relative |
-| No internet / cloud in orbit | Fully offline — custom trained model, no API calls |
-| Pose representation | Person-center and bounding-box normalization stabilizes translation and scale; rotation robustness is not established by the current feature transform |
-| False positives from idle movement | Sliding-window voting — 65% of last 20 frames must agree before triggering |
-| Step sequence must be enforced | DAG validator — mathematically impossible to skip or repeat validated steps |
-| Communication delays prevent remote support | System is fully autonomous — astronaut performs experiment independently with on-board AI guidance |
+* 🎥 Live camera processing
+* 🧠 AI-based object detection
+* 🧍 Human pose estimation
+* 🔄 Experiment step/sequence validation
+* 🗣️ Offline Text-to-Speech (TTS) alerts
+* ⚠️ Step missed detection
+* ⚠️ Out-of-sequence detection
+* 📋 Timestamped experiment logging
+* 💾 Local video recording
+* 🖥️ GUI-based monitoring
+* 🌐 Optional IP video streaming
+* 🔌 Offline operation after initial setup
+* 🧪 Configurable experiments
 
 ---
 
-## Tech Stack
+# 🏗️ System Architecture
 
-| Component | Library / Tool | Version | Role |
-|---|---|---|---|
-| Pose estimation | `ultralytics` (YOLOv8n-pose) | 8.x | 17-joint real-time skeleton at ~30fps |
-| Action classifier | torch (TCN+GRU) | 2.x | 20-frame sequence classification on 51 YOLO pose features |
-| Rack-relative frame | `opencv-contrib-python` (ArUco) | 4.x | Microgravity orientation anchor |
-| Step validation | Custom DAG (`validator.py`) | — | Enforces experiment protocol order |
-| Voice alerts | PowerShell SAPI on Windows | system | Offline runtime announcements |
-| Live GUI | `flask` + Server-Sent Events | 3.x | Real-time browser dashboard, no reload |
-| Video recording | `cv2.VideoWriter` | — | Saves `.avi` experiment recordings |
-| Logging | JSONL (`experiment_log.jsonl`) | — | Timestamped structured event log |
-
----
-
-## File Structure
-
-```
-BAS_based_HAR_system/
-│
-├── main.py                   # Full pipeline entry point (run this)
-├── config.py                 # Experiment steps + DAG dict (edit to change experiment)
-├── validator.py              # DAG step validation logic
-│
-├── collect_keypoints.py      # Step 1: collect training data via webcam (YOLOv8 keypoints)
-├── train_keypoint_model.py   # Session-grouped TCN+GRU train/validation/test pipeline
-├── temporal_model.py         # TCN+GRU architecture definition
-│
-├── collect_images.py         # (legacy) raw image collection for CNN approach
-├── train_model.py            # (legacy) MobileNetV3 image classifier
-│
-├── aruco_rack.py             # Standalone ArUco rack detection test script
-├── rack_pose.py              # Standalone rack + pose overlay test script
-├── zone_debug.py             # Rack-relative wrist coordinate debugger
-├── pose_engine.py            # Pose utility reference
-├── camera_test.py            # Quick camera sanity check
-├── test_llava.py             # LLaVA inference test (prototype stage)
-│
-├── tcngru_exp*.pth           # ← Preserved legacy TCN+GRU weights
-├── mlp_exp*.pth              # ← Legacy MLP weights (not Phase 1 runtime models)
-├── har_model.pth             # ← CNN weights (generated by train_model.py)
-├── kp_mean_exp*.npy          # ← Preserved legacy normalization files
-├── kp_std_exp*.npy           # Keypoint normalisation std
-├── class_map_exp*.json       # Class index → action string mapping
-├── experiment_log.jsonl      # Timestamped experiment event log
-│
-├── keypoint_data/            # New session clips plus append-only JSONL manifests
-├── dataset/                  # Collected image files (per class, legacy)
-├── recordings/               # AVI recordings plus new session metadata
-│
-└── gui/
-    └── app.py                # Standalone GUI server (development reference)
+```text
+Camera
+   │
+   ▼
+Video Capture
+   │
+   ├──────────────► YOLOv8 Pose
+   │                    │
+   │                    ▼
+   │              Human Wrist/Pose
+   │
+   └──────────────► RF-DETR Object Detection
+                        │
+                        ▼
+                 Object Detection
+                        │
+                        ▼
+              Experiment Conditions
+                        │
+                        ▼
+                 Step Validation
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+        GUI            TTS          Logger
+          │             │             │
+          ▼             ▼             ▼
+      Monitoring     Voice Alert   JSONL Log
+                                      │
+                                      ▼
+                                Local Storage
 ```
 
 ---
 
-## Installation
+# 📁 Project Structure
+
+The recommended project structure is:
+
+```text
+BAS_based_HAR_system-main/
+│
+├── main.py
+├── config.py
+├── requirements.txt
+├── README.md
+│
+├── venv312/
+│
+├── src/
+│   ├── __init__.py
+│   ├── detector.py
+│   ├── conditions.py
+│   ├── tracker.py
+│   ├── dag.py
+│   ├── tts_alerts.py
+│   ├── logger.py
+│   ├── camera.py
+│   └── gui.py
+│
+├── models/
+│   └── yolov8n-pose.pt
+│
+└── data/
+    ├── experiments/
+    │   └── experiments.json
+    │
+    ├── logs/
+    │
+    └── videos/
+```
+
+### Important files
+
+| File / Folder                       | Purpose                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `main.py`                           | Main program / application entry point                 |
+| `config.py`                         | Global configuration and experiment settings           |
+| `requirements.txt`                  | Python dependencies                                    |
+| `src/detector.py`                   | YOLOv8 pose + RF-DETR object detection                 |
+| `src/conditions.py`                 | Determines whether experiment conditions are satisfied |
+| `src/tracker.py`                    | Confirms detections over multiple frames               |
+| `src/dag.py`                        | Handles experiment sequence/order                      |
+| `src/tts_alerts.py`                 | Offline voice alerts                                   |
+| `src/logger.py`                     | Experiment event logging                               |
+| `src/camera.py`                     | Camera capture, recording and optional streaming       |
+| `src/gui.py`                        | Graphical monitoring interface                         |
+| `data/experiments/experiments.json` | Experiment definitions                                 |
+| `data/logs/`                        | Generated experiment logs                              |
+| `data/videos/`                      | Recorded experiment videos                             |
+| `models/`                           | Local AI model files                                   |
+
+The original project design uses separate detector, tracker, DAG, TTS, logger, camera and GUI modules for this purpose.
+
+---
+
+# 💻 Requirements
+
+## Hardware
+
+Recommended:
+
+* Windows laptop/PC
+* Webcam or laptop camera
+* Minimum 8 GB RAM
+* Recommended 16 GB RAM
+* CPU capable of running PyTorch
+* GPU optional but recommended for faster inference
+
+For the current development setup, the **laptop's built-in camera** can be used.
+
+---
+
+# 🐍 Python Environment
+
+Python should be installed before starting the project.
+
+Check Python:
 
 ```powershell
-# 1. Clone the repository
-git clone https://github.com/Anish05s/BAS_based_HAR_system
-cd BAS_based_HAR_system
-
-# 2. Create and activate a virtual environment
-python -m venv .venv
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install --upgrade pip
-pip install torch torchvision
-pip install opencv-contrib-python
-pip install ultralytics
-pip install flask pyttsx3
-pip install numpy scikit-learn pillow
+python --version
 ```
 
-> **⚠ Important:** Do NOT install `mediapipe` or `tensorflow` in the same environment.  
-> They conflict with numpy versions (`mediapipe` pins `numpy<2`, conflicts with `opencv-contrib`).  
-> This project does not use either library.
+Example:
+
+```text
+Python 3.12.x
+```
 
 ---
 
-## Usage
+# 🔧 1. Create Virtual Environment
 
-### Collect a labelled session
+Open the project in VS Code.
 
-    py -3 collect_keypoints.py --exp 1
-    py -3 collect_keypoints.py --exp 2
+Open:
 
-Each collector invocation creates a new session ID. Select an action with its number key, then use SPACE to start and stop a live-camera clip. For a video source, use R to mark labelled clips and SPACE to pause or resume. The operator-selected labels and frame indices are written to keypoint_data/manifest.jsonl; clips go into a new keypoint_data/expN/session_<uuid>/ directory. Existing data is not overwritten.
+```text
+Terminal → New Terminal
+```
 
-For independent evaluation, collect multiple complete sessions from separate takes. Include clips for every configured class, including idle. A clip needs at least 20 contiguous detected-pose frames. The trainer will report an error instead of splitting sessions if it cannot form non-empty, session-disjoint train, validation, and test groups.
+Navigate to the project directory:
 
-### Inspect existing data
+```powershell
+cd "D:\New folder\BAS_based_HAR_system-main"
+```
 
-    py -3 inventory_migration.py
+Create the virtual environment:
 
-This reads the current recordings, image folders, keypoint files, and experiment log, then writes a new timestamped report under migration_reports/. It does not modify the source data. Uncertain session, source-video, and experiment provenance remains unassigned.
+```powershell
+python -m venv venv312
+```
 
-### Train and evaluate TCN+GRU
+Activate it:
 
-    py -3 train_keypoint_model.py --exp 1 --model tcngru
+```powershell
+venv312\Scripts\activate
+```
 
-Training uses manifest-backed clips only. Whole source-recording groups for video clips and whole capture-session groups for live clips are split before any 20-frame windows are made. Normalization is fit on unique training frames only. The validation set selects the checkpoint; the independent test set is evaluated once at the end. The split, ordered canonical class map, normalization, metrics, seed, YOLO weights fingerprint, Ultralytics version, and input schema are stored in a new models/phase1/expN/run_<id>/ directory. Existing checkpoints and normalization files are not replaced.
+You should now see:
 
-If there are too few independent sessions, the trainer stops without creating a split or model output. It does not claim improved accuracy; metrics describe only the recorded test sessions.
+```text
+(venv312)
+```
 
-### Run the monitor
+at the beginning of your terminal.
 
-    py -3 main.py
+For example:
 
-The monitor loads only a metadata-backed Phase 1 TCN+GRU run with a matching experiment, class map, 51-feature schema, 20-frame input, and non-empty independent test evaluation. Legacy root-level checkpoints are preserved but are not treated as verified Phase 1 models. If no qualifying run exists, the dashboard and camera can start while action inference remains disabled.
-
-Experiment switching resets the model, vote buffer, temporal buffer, validator graph state, and dashboard progress. validator.py enforces configured DAG edges rather than assuming a linear order.
-## GUI Dashboard
-
-Open `http://<ip>:5000` in any browser:
-
-| Element | Description |
-|---|---|
-| **Live video** | Camera feed with YOLOv8 skeleton overlay and step label |
-| **Progress bar** | Visual experiment completion percentage |
-| **Status indicator** | WAITING (orange) / ARMED — Inference RUNNING (green) |
-| **Detection row** | Current model prediction + confidence + vote count |
-| **Rack-relative coords** | Right wrist position relative to ArUco rack origin |
-| **Alert panel** | Skip / already-done warning messages |
-| **Experiment log** | Last 15 timestamped events |
-| **START / STOP / Reset** | Full experiment flow control |
-
-Updates via **Server-Sent Events** (SSE) — live push, no page reload, no meta-refresh.
+```text
+(venv312) PS D:\New folder\BAS_based_HAR_system-main>
+```
 
 ---
 
-## ArUco Rack Setup
+# 📦 2. Install Dependencies
 
-Print an **ArUco marker ID = 0** from the `DICT_6X6_250` dictionary and attach it to the experiment rack or equipment tray.
+With the virtual environment activated:
 
-**Generate a printable marker:**
+```powershell
+pip install -r requirements.txt
+```
+
+If some packages are missing, install the main dependencies manually:
+
+```powershell
+pip install ultralytics opencv-python numpy pyttsx3 inference pillow
+```
+
+The project requires packages for:
+
+* YOLOv8
+* OpenCV
+* NumPy
+* RF-DETR / Roboflow inference
+* Text-to-Speech
+* Image processing
+
+---
+
+# 🤖 3. AI Models
+
+The project uses two main AI components.
+
+## YOLOv8 Pose
+
+YOLOv8 Pose is used for human pose estimation.
+
+It provides body keypoints such as:
+
+```text
+Left Wrist
+Right Wrist
+```
+
+These points are used to determine interactions between the astronaut's hands and detected objects.
+
+The project originally used YOLOv8 models that could be downloaded automatically on first execution.
+
+---
+
+## RF-DETR Object Detection
+
+The custom experiment objects are detected using a Roboflow-trained model.
+
+Example classes:
+
+```text
+container
+lid
+spoon
+```
+
+Your Roboflow model must be trained with correctly labelled objects.
+
+For example:
+
+```text
+container → container
+lid       → lid
+spoon     → spoon
+```
+
+The model ID configured in `config.py` must match the current deployed/trained model version.
+
+Example:
+
 ```python
-import cv2
-import cv2.aruco as aruco
-import numpy as np
-
-dictionary = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
-marker = aruco.generateImageMarker(dictionary, 0, 300)
-cv2.imwrite("aruco_marker_0.png", marker)
+ROBOFLOW_MODEL_ID = "bas-dgyu0/2"
 ```
 
-Print `aruco_marker_0.png` at ~5×5 cm and fix it to the rack. The current runtime will:
-1. Detect the marker and set it as coordinate origin `(0, 0)`
-2. Display the right-wrist pixel offset from this origin (not a classifier feature)
-3. Fall back to the last known position if the marker is temporarily blocked by hands
-
-The marker provides a rack-relative display cue. The classifier itself currently uses person-relative keypoints; orientation robustness has not been established.
+If you train a new version, update this value accordingly.
 
 ---
 
-## Model Details
+# 🔑 4. Configure Roboflow
 
-### Temporal Action Classifier (TCN + GRU)
+Open:
 
-The classifier input contract is exactly 20 frames × 51 features: 17 YOLOv8-Pose COCO keypoints with (x, y, confidence) per point. Training creates windows within a single labelled clip and rejects windows that cross missing-frame gaps. Inference clears the temporal buffer when no person pose is detected.
+```text
+config.py
+```
 
-The 51 input features are person-center and bounding-box normalized by the same extraction logic in collection and runtime. Saved z-score mean and standard deviation are fitted on training frames only and are carried in the checkpoint metadata.
+Find:
 
-Canonical action IDs are stored with the ordered model output map. Experiment 2's existing scooping and capping labels remain unmapped legacy labels; they are not converted automatically. Idle is a background class and is not a DAG step.
+```python
+ROBOFLOW_API_KEY = "paste_your_private_api_key_here"
+```
 
-### Evaluation protocol
+Replace it with your Roboflow private API key.
 
-- Split unit: complete capture session.
-- Split occurs before temporal-window generation.
-- At least three eligible session groups are required to make non-empty train, validation, and test groups. Actual proportions depend on the available whole groups.
-- Validation selects the best epoch; test data is held out until final reporting.
-- Window-level metrics are reported with a macro average across independent test groups; overlapping windows are not treated as independent observations.
-- Per-class support is included with test metrics so missing class coverage is visible.
-## References
+Example:
 
-### Core Models and Libraries Used
+```python
+ROBOFLOW_API_KEY = "YOUR_PRIVATE_API_KEY"
+```
 
-**[1]** Jocher, G., Chaurasia, A., & Qiu, J. (2023). *Ultralytics YOLOv8* (Version 8.0.0) [Software]. Ultralytics. https://github.com/ultralytics/ultralytics  
-*(Pose estimation backbone — 17 COCO keypoints at 30fps)*
+Then set the model ID:
 
-**[2]** Howard, A., Sandler, M., Chu, G., Chen, L.-C., Chen, B., Tan, M., Wang, W., Zhu, Y., Pang, R., Vasudevan, V., Le, Q. V., & Adam, H. (2019). Searching for MobileNetV3. *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*, 1314–1324.  
-*(Lightweight CNN backbone used in the image-classification prototype stage)*
+```python
+ROBOFLOW_MODEL_ID = "bas-dgyu0/2"
+```
 
-**[3]** Garrido-Jurado, S., Muñoz-Salinas, R., Madrid-Cuevas, F. J., & Marín-Jiménez, M. J. (2014). Automatic generation and detection of highly reliable fiducial markers under occlusion. *Pattern Recognition*, 47(6), 2280–2292. https://doi.org/10.1016/j.patcog.2014.01.005  
-*(ArUco fiducial markers — rack-relative coordinate frame for microgravity)*
-
-**[4]** Bradski, G. (2000). The OpenCV Library. *Dr. Dobb's Journal of Software Tools*.  
-*(OpenCV — camera capture, ArUco detection, video recording, frame overlays)*
-
-**[5]** Pallets Projects. (2010). *Flask* [Software]. https://flask.palletsprojects.com  
-*(Web server for the real-time SSE monitoring dashboard)*
+Make sure the model version corresponds to the model currently deployed in Roboflow.
 
 ---
 
-### Related Work — Human Activity Recognition
+# ⚠️ IMPORTANT: Never Upload Your API Key
 
-**[6]** Carreira, J., & Zisserman, A. (2017). Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 4724–4733. https://doi.org/10.1109/CVPR.2017.502  
-*(I3D — foundational two-stream inflated 3D ConvNet for video action recognition)*
+Do **not** commit your private API key to GitHub.
 
-**[7]** Yan, S., Xiong, Y., & Lin, D. (2018). Spatial Temporal Graph Convolutional Networks for Skeleton-Based Action Recognition. *Proceedings of the Thirty-Second AAAI Conference on Artificial Intelligence (AAAI-18)*. https://doi.org/10.1609/aaai.v32i1.12328  
-*(ST-GCN — skeleton joints as graph → GCN for action classification; direct conceptual basis for keypoint-based HAR)*
+Instead of:
 
-**[8]** Cheng, K., Zhang, Y., He, X., Chen, W., Cheng, J., & Lu, H. (2020). Skeleton-Based Action Recognition with Shift Graph Convolutional Network. *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 183–192.  
-*(Shift-GCN — improved skeleton-based recognition with variable-length sequence handling)*
+```python
+ROBOFLOW_API_KEY = "abc123..."
+```
 
-**[9]** Arshad, M. H., Bilal, M., & Gani, A. (2022). Human Activity Recognition: Review, Taxonomy and Open Challenges. *Sensors*, 22(17), 6463. https://doi.org/10.3390/s22176463  
-*(Comprehensive HAR survey — covers CNN, LSTM, GCN approaches; confirms keypoint-based methods as state-of-the-art for real-time edge HAR)*
+use an environment variable for a public GitHub repository.
 
----
+For example:
 
-### Space Operations and Astronaut Monitoring
+```python
+ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
+```
 
-**[10]** NASA Human Research Program. (2022). *Evidence Report: Risk of Adverse Cognitive or Behavioral Conditions and Psychiatric Disorders*. NASA Johnson Space Center.  
-*(Establishes the need for autonomous performance monitoring during long-duration spaceflight when ground support is unavailable)*
+Then configure the key locally.
 
-**[11]** Tatebe, K., Shiraishi, N., Kaneko, K., & Nagatomo, M. (2022). Study of AI and ML Based Technologies Used in International Space Station. *International Journal of Engineering Research and Technology (IJERT)*, 11(5).  
-*(Survey of deployed AI systems on ISS — onboard assistants, crew health monitoring, experiment support)*
-
-**[12]** Fong, T., Nourbakhsh, I., & Dautenhahn, K. (2003). A survey of socially interactive robots. *Robotics and Autonomous Systems*, 42(3–4), 143–166.  
-*(Human-robot teaming principles applied in this work via the DAG-driven co-procedure model)*
+Also add your secrets to `.gitignore`.
 
 ---
 
-*Built for Smart India Hackathon 2026. All inference runs locally on the astronaut's on-board computer.*
+# 📷 5. Camera Configuration
 
+The current system can use your laptop camera.
+
+In `config.py`:
+
+```python
+CAMERA_INDEX = 0
+```
+
+Usually:
+
+```text
+0 = built-in/default webcam
+1 = second camera
+2 = third camera
+```
+
+For a normal laptop webcam, use:
+
+```python
+CAMERA_INDEX = 0
+```
+
+---
+
+# 🌐 6. IP Streaming
+
+If the entire system is running on the same laptop, IP streaming is **not required**.
+
+Set:
+
+```python
+STREAM_ENABLED = False
+```
+
+This is the recommended configuration for the current laptop-camera setup.
+
+The system will still:
+
+* show the live camera in the GUI
+* process the camera
+* record video locally
+* run object detection
+* run pose detection
+* generate voice alerts
+* generate logs
+
+The previous project configuration also explicitly supports disabling streaming when everything is running on one machine.
+
+---
+
+# 📡 Optional IP Streaming
+
+If a second computer needs to receive the video, enable:
+
+```python
+STREAM_ENABLED = True
+STREAM_IP = "192.168.1.100"
+STREAM_PORT = 5000
+```
+
+The receiving computer must be listening on the configured port.
+
+This is optional and is **not necessary for the laptop-only demonstration**.
+
+---
+
+# 🧪 7. Configure the Experiment
+
+Experiment logic is configurable.
+
+The current example uses:
+
+```text
+Pick Up Container
+Open Container
+Use Spoon to Extract
+Place Contents in Rack
+Close Container
+```
+
+The sequence can be represented using:
+
+```python
+EXPERIMENT_STEPS = [
+    "Pick Up Container",
+    "Open Container",
+    "Use Spoon to Extract",
+    "Place Contents in Rack",
+    "Close Container",
+]
+```
+
+The project also defines detection conditions for each step.
+
+Example:
+
+```python
+STEP_CONDITIONS = [
+    {
+        "objects": ["container"],
+        "interaction": "motion_pickup"
+    },
+
+    {
+        "objects": ["lid", "container"],
+        "interaction": "separation"
+    },
+
+    {
+        "objects": ["spoon", "container"],
+        "interaction": "enter_exit"
+    }
+]
+```
+
+---
+
+# 🔄 Experiment Sequence
+
+The sequence is controlled using the DAG.
+
+Example:
+
+```python
+DAG = {
+    0: [1],
+    1: [2],
+    2: [3],
+    3: [4]
+}
+```
+
+This means:
+
+```text
+Step 0
+  ↓
+Step 1
+  ↓
+Step 2
+  ↓
+Step 3
+  ↓
+Step 4
+```
+
+The system can therefore determine whether an experiment step happens in the expected order.
+
+---
+
+# 🧠 Step Detection
+
+The current condition system supports interactions such as:
+
+### 1. Motion Pickup
+
+The system checks:
+
+```text
+Hand near object
++
+Object moves
+```
+
+Example:
+
+```text
+Pick up container
+```
+
+---
+
+### 2. Separation
+
+The system checks whether two objects move sufficiently far apart.
+
+Example:
+
+```text
+Container
+     ↓
+Lid removed
+```
+
+---
+
+### 3. Enter / Exit
+
+The system first detects:
+
+```text
+Spoon inside container
+```
+
+and then:
+
+```text
+Spoon outside container
+```
+
+The complete inside → outside movement can be used to confirm the action.
+
+---
+
+### 4. Hand/Object Interaction
+
+The pose detector provides wrist positions.
+
+The system can calculate the distance between:
+
+```text
+Wrist
+   ↓
+Object
+```
+
+This helps determine whether an astronaut is interacting with an object.
+
+---
+
+# 🗣️ Offline Text-to-Speech
+
+The project uses:
+
+```text
+pyttsx3
+```
+
+for local voice alerts.
+
+No cloud TTS service is required.
+
+Examples of alerts:
+
+```text
+Step done
+```
+
+```text
+Next step: Open Container
+```
+
+```text
+Alert: Step missed
+```
+
+```text
+Alert: Out of sequence
+```
+
+```text
+All steps complete. Experiment finished.
+```
+
+The TTS system was designed to run using the computer's local speech engine.
+
+---
+
+# 🔊 Test TTS Separately
+
+If the system does not speak, test the Windows TTS engine directly:
+
+```powershell
+python -c "import pyttsx3; e=pyttsx3.init(); e.say('Test voice alert'); e.runAndWait()"
+```
+
+If you hear:
+
+```text
+Test voice alert
+```
+
+then the TTS engine is working.
+
+---
+
+# ▶️ 8. Start the Project
+
+Every time you open VS Code again:
+
+### Activate the virtual environment
+
+```powershell
+venv312\Scripts\activate
+```
+
+You should see:
+
+```text
+(venv312)
+```
+
+Then run:
+
+```powershell
+python main.py
+```
+
+This is the current main command for the newer project setup.
+
+---
+
+# 🚀 Complete Start Sequence
+
+For a fresh terminal, use:
+
+```powershell
+cd "D:\New folder\BAS_based_HAR_system-main"
+```
+
+Then:
+
+```powershell
+venv312\Scripts\activate
+```
+
+Then:
+
+```powershell
+python main.py
+```
+
+---
+
+# 🛑 9. Stop the Program
+
+If the camera window is running:
+
+```text
+Q
+```
+
+can be used if the application supports the quit key.
+
+The safest method from the VS Code terminal is:
+
+```text
+Ctrl + C
+```
+
+This stops the Python program.
+
+---
+
+# 📊 10. Output Files
+
+After running an experiment, generated data is stored locally.
+
+## Logs
+
+```text
+data/logs/
+```
+
+The system records events such as:
+
+```text
+experiment_start
+step_confirmed
+step_skipped
+out_of_order
+experiment_complete
+experiment_end
+```
+
+The logs contain timestamps and experiment information.
+
+---
+
+## Videos
+
+Recorded videos are stored in:
+
+```text
+data/videos/
+```
+
+This allows the experiment to be reviewed later.
+
+---
+
+# 🔌 11. Offline Operation
+
+The system is designed for offline runtime operation.
+
+## Internet is required initially for:
+
+### Package installation
+
+```powershell
+pip install -r requirements.txt
+```
+
+### Initial model download
+
+The required AI model files may need to be downloaded during the first setup.
+
+### Model training
+
+If the Roboflow dataset needs to be trained or retrained, internet is required during that training/deployment process.
+
+---
+
+# ✅ After Setup
+
+Once the required packages and models are available locally, the actual experiment processing can run without continuous internet access.
+
+The following components operate locally:
+
+```text
+Camera
+   ↓
+AI inference
+   ↓
+Pose detection
+   ↓
+Object detection
+   ↓
+Step validation
+   ↓
+TTS
+   ↓
+GUI
+   ↓
+Logging
+   ↓
+Video recording
+```
+
+The original project design specifically targeted standalone local processing because raw video does not need to be continuously transmitted to ground control.
+
+---
+
+# 🧪 12. Testing the Object Detector
+
+Before testing the complete experiment, test the object detector separately.
+
+The detector should correctly identify:
+
+```text
+container
+lid
+spoon
+```
+
+Do not move to experiment-step validation until the object detector reliably identifies these classes.
+
+This is especially important because the experiment logic depends on the object detector's output.
+
+---
+
+# 🎯 Roboflow Dataset Requirements
+
+Your training dataset should contain correctly labelled examples.
+
+For example:
+
+| Object    | Correct Label |
+| --------- | ------------- |
+| Container | `container`   |
+| Lid       | `lid`         |
+| Spoon     | `spoon`       |
+
+Check several annotated images manually.
+
+If every object is labelled:
+
+```text
+lid
+```
+
+the trained model may classify everything as `lid`.
+
+The labels must be corrected before retraining.
+
+---
+
+# ⚡ 13. Performance / Lag
+
+AI inference can be computationally expensive, particularly when running object detection and pose estimation simultaneously on a laptop CPU.
+
+If the video becomes slow:
+
+### Possible causes
+
+* CPU-only inference
+* High camera resolution
+* Running pose detection every frame
+* Running RF-DETR on every frame
+* Large model
+* High input resolution
+
+### Possible optimization
+
+Process detection every few frames while keeping the GUI updated continuously.
+
+Example concept:
+
+```python
+if frame_n % 3 == 0:
+    result = detector.detect(frame)
+```
+
+This reduces the number of expensive AI inference calls.
+
+The earlier development testing also identified frame skipping as a practical approach for improving live-video responsiveness.
+
+---
+
+# 🐛 14. Troubleshooting
+
+## `ModuleNotFoundError: No module named 'src'`
+
+Make sure the project contains:
+
+```text
+src/
+    __init__.py
+    detector.py
+```
+
+and that `src` is located beside:
+
+```text
+main.py
+```
+
+Correct:
+
+```text
+project/
+├── main.py
+└── src/
+    ├── __init__.py
+    └── detector.py
+```
+
+---
+
+## `ModuleNotFoundError: No module named 'ultralytics'`
+
+Activate the virtual environment:
+
+```powershell
+venv312\Scripts\activate
+```
+
+Then install:
+
+```powershell
+pip install ultralytics
+```
+
+---
+
+## Camera does not open
+
+Check:
+
+```python
+CAMERA_INDEX = 0
+```
+
+Also make sure another application such as:
+
+```text
+Zoom
+Teams
+Google Meet
+Camera
+```
+
+is not already using the webcam.
+
+---
+
+## TTS does not work
+
+Run:
+
+```powershell
+python -c "import pyttsx3; e=pyttsx3.init(); e.say('Test'); e.runAndWait()"
+```
+
+Then check:
+
+* Windows volume
+* Application volume
+* Default Windows audio output
+* `pyttsx3` installation
+
+---
+
+## Object detector gives incorrect labels
+
+Check:
+
+1. Roboflow dataset labels
+2. Dataset class names
+3. Training quality
+4. Model version
+5. `ROBOFLOW_MODEL_ID`
+6. Detection confidence
+7. Lighting
+8. Camera angle
+9. Object size in the frame
+
+Test the trained model in Roboflow before debugging the experiment logic.
+
+---
+
+## Video is lagging
+
+Try:
+
+* reducing camera resolution
+* reducing AI inference frequency
+* using a smaller model
+* enabling GPU acceleration if available
+* processing every 2nd/3rd frame
+
+---
+
+# 🔐 15. `.gitignore`
+
+Do not upload your virtual environment, secrets, generated videos, logs or unnecessary model files.
+
+Create:
+
+```text
+.gitignore
+```
+
+in the project root.
+
+Recommended contents:
+
+```gitignore
+# Virtual environment
+venv/
+venv312/
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE
+.vscode/
+
+# Logs
+data/logs/*
+!data/logs/.gitkeep
+
+# Recorded videos
+data/videos/*
+!data/videos/.gitkeep
+
+# Local secrets
+.env
+*.key
+*.secret
+
+# Roboflow/API secrets
+secrets.py
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+```
+
+If your model files are very large, consider keeping them outside the normal Git repository or using Git LFS.
+
+---
+
+# 🐙 16. Upload Project to GitHub
+
+Open the VS Code terminal in the project folder.
+
+Check:
+
+```powershell
+git --version
+```
+
+Initialize Git:
+
+```powershell
+git init
+```
+
+Add files:
+
+```powershell
+git add .
+```
+
+Check what will be committed:
+
+```powershell
+git status
+```
+
+Commit:
+
+```powershell
+git commit -m "Initial commit"
+```
+
+Create a new repository on GitHub.
+
+Then connect your local project:
+
+```powershell
+git remote add origin YOUR_GITHUB_REPOSITORY_URL
+```
+
+Rename the branch:
+
+```powershell
+git branch -M main
+```
+
+Push:
+
+```powershell
+git push -u origin main
+```
+
+After the first push, future updates can usually be done with:
+
+```powershell
+git add .
+git commit -m "Update project"
+git push
+```
+
+---
+
+# 🔒 IMPORTANT BEFORE `git push`
+
+Run:
+
+```powershell
+git status
+```
+
+Make sure the following are NOT being uploaded:
+
+```text
+venv312/
+.env
+API keys
+private credentials
+large generated videos
+large temporary files
+```
+
+Never put your Roboflow private API key directly into a public GitHub repository.
+
+---
+
+# 🧩 17. Adding a New Experiment
+
+The system is designed so the experiment definition can be changed without rewriting the complete detection pipeline.
+
+Define:
+
+```text
+Experiment
+    ↓
+Steps
+    ↓
+Objects
+    ↓
+Interaction conditions
+    ↓
+Expected order
+```
+
+For example:
+
+```text
+Step 1 → Pick up container
+Step 2 → Open lid
+Step 3 → Use spoon
+Step 4 → Place material
+Step 5 → Close container
+```
+
+The detection system identifies the objects and interactions while the sequence system determines whether the astronaut is following the expected order.
+
+---
+
+# 🛰️ 18. Intended BAS Use Case
+
+The long-term concept is:
+
+```text
+Astronaut
+    ↓
+Fixed Payload Camera
+    ↓
+Local AI Processing
+    ↓
+Object + Pose Detection
+    ↓
+Experiment Step Recognition
+    ↓
+Sequence Validation
+    ↓
+Voice Feedback
+    ↓
+Timestamped Experiment Record
+```
+
+Instead of continuously sending raw video to Earth, the system can process the experiment locally and produce lightweight structured information about what happened.
+
+---
+
+# 🎯 Project Goals
+
+The final system is intended to provide:
+
+* Real-time experiment monitoring
+* Object detection
+* Human pose estimation
+* Activity recognition
+* Experiment sequence validation
+* Missed-step detection
+* Out-of-sequence detection
+* Voice feedback
+* Local video storage
+* Timestamped event logs
+* Offline operation
+* Configurable experiments
+* GUI monitoring
+
+---
+
+# ⚠️ Current Development Note
+
+The object detection model is the foundation of the complete experiment-recognition pipeline.
+
+Therefore, the development should proceed in this order:
+
+```text
+1. Verify camera
+       ↓
+2. Verify object detection
+       ↓
+3. Verify human pose detection
+       ↓
+4. Verify object + hand interaction
+       ↓
+5. Verify individual experiment conditions
+       ↓
+6. Verify step tracking
+       ↓
+7. Verify DAG/sequence validation
+       ↓
+8. Verify TTS alerts
+       ↓
+9. Verify logging
+       ↓
+10. Verify complete experiment
+```
+
+Do not attempt to tune all experiment steps simultaneously before the individual object classes are reliably detected.
+
+---
+
+# 📌 Quick Start
+
+For an already configured project:
+
+```powershell
+cd "D:\New folder\BAS_based_HAR_system-main"
+```
+
+Activate the environment:
+
+```powershell
+venv312\Scripts\activate
+```
+
+Run:
+
+```powershell
+python main.py
+```
+
+Stop:
+
+```text
+Ctrl + C
+```
+
+---
+
+# 👨‍💻 Development
+
+This project is intended as a modular AI-based experiment-monitoring platform.
+
+The detection layer, experiment-condition layer, sequence-validation layer, TTS layer, GUI layer and logging layer are separated so that individual components can be improved without redesigning the complete application.
+
+---
+
+# 📄 License
+
+Add the project's chosen license here before publishing the repository publicly.
+
+---
+
+# 🚀 Future Improvements
+
+Potential development areas include:
+
+* Improved custom object detection
+* Better hand-object interaction recognition
+* More robust temporal activity recognition
+* 3D/orientation-agnostic human pose estimation
+* Better experiment configuration UI
+* GPU acceleration
+* More efficient edge inference
+* Robust video streaming
+* Automatic experiment report generation
+* Additional BAS experiment templates
+* Improved false-positive handling
+* Confidence-aware step validation
+* Multi-camera support
+
+---
+
+## Project Concept
+
+**AI Human Activity Recognition for Autonomous On-Board BAS Experiments**
+
+The system is intended to operate as an autonomous local AI assistant that monitors predefined scientific experiments, provides real-time feedback, detects deviations from the expected procedure and generates a lightweight record of the experiment.
